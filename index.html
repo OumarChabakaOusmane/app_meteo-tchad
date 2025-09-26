@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Météo Tchad - Prévisions sur 7 jours</title>
+    <style>
+        /* Variables CSS */
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --border-radius: 8px;
+        }
+
+        /* Reset et styles de base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* En-tête */
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 1.5rem 0;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        /* Section de sélection de ville */
+        .city-selector {
+            background-color: white;
+            padding: 1.5rem;
+            margin: 2rem auto;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            max-width: 600px;
+        }
+
+        .city-selector label {
+            display: block;
+            margin-bottom: 0.8rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .city-selector select {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            background-color: white;
+            cursor: pointer;
+        }
+
+        /* Section de chargement */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            display: none;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--secondary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Section d'erreur */
+        .error {
+            background-color: #ffeaea;
+            color: #d63031;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin: 1rem 0;
+            display: none;
+        }
+
+        /* Section météo actuelle */
+        .current-weather {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: white;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            display: none;
+        }
+
+        .current-weather h2 {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .weather-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .temperature {
+            font-size: 3rem;
+            font-weight: 700;
+        }
+
+        .weather-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .detail-item {
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 0.8rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+        }
+
+        /* Section prévisions sur 7 jours */
+        .forecast {
+            margin-bottom: 2rem;
+            display: none;
+        }
+
+        .forecast h2 {
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .forecast-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .forecast-card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 1rem;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .forecast-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .forecast-date {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+
+        .forecast-icon {
+            width: 50px;
+            height: 50px;
+            margin: 0.5rem auto;
+        }
+
+        .forecast-temp {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 0.5rem;
+        }
+
+        .temp-max {
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        .temp-min {
+            color: var(--secondary-color);
+            font-weight: 600;
+        }
+
+        /* Pied de page */
+        footer {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 1.5rem 0;
+            margin-top: 2rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .weather-main {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .temperature {
+                font-size: 2.5rem;
+            }
+            
+            .forecast-cards {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            }
+        }
+
+        @media (max-width: 480px) {
+            header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .forecast-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .city-selector, .current-weather, .forecast-card {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🌤 Météo Tchad</h1>
+            <p>Prévisions météo sur 7 jours pour les villes tchadiennes</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="city-selector">
+            <label for="city-select">Sélectionnez une ville :</label>
+            <select id="city-select">
+                <option value="">-- Choisissez une ville --</option>
+                <option value="N'Djamena">N'Djamena</option>
+                <option value="Moundou">Moundou</option>
+                <option value="Sarh">Sarh</option>
+                <option value="Abéché">Abéché</option>
+                <option value="Mongo">Mongo</option>
+            </select>
+        </section>
+
+        <section class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Chargement des données météo...</p>
+        </section>
+
+        <section class="error" id="error">
+            <p id="error-message"></p>
+        </section>
+
+        <section class="current-weather" id="current-weather">
+            <h2 id="current-city"> Ville sélectionnée</h2>
+            <div class="weather-main">
+                <div>
+                    <div class="temperature" id="current-temp">--°C</div>
+                    <div id="current-desc">Conditions météo</div>
+                </div>
+                <div id="current-icon"></div>
+            </div>
+            <div class="weather-details">
+                <div class="detail-item">
+                    <div>Ressenti</div>
+                    <div id="feels-like">--°C</div>
+                </div>
+                <div class="detail-item">
+                    <div>Humidité</div>
+                    <div id="humidity">--%</div>
+                </div>
+                <div class="detail-item">
+                    <div>Vent</div>
+                    <div id="wind">-- km/h</div>
+                </div>
+                <div class="detail-item">
+                    <div>Pression</div>
+                    <div id="pressure">-- hPa</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="forecast" id="forecast">
+            <h2>📅 Prévisions sur 7 jours</h2>
+            <div class="forecast-cards" id="forecast-cards">
+                <!-- Les cartes de prévision seront générées ici par JavaScript -->
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>Application Météo Tchad &copy; 2023 - Données météo fournies par OpenWeatherMap</p>
+        </div>
+    </footer>
+
+    <script>
+        // Configuration
+        const API_KEY = 'f9ecba1a2bd9d6b1eeb1e7cd2c31ce14'; // Remplacez par votre clé API OpenWeatherMap
+        const CITIES = {
+            "N'Djamena": { lat: 12.1348, lon: 15.0557 },
+            "Moundou": { lat: 8.5667, lon: 16.0833 },
+            "Sarh": { lat: 9.15, lon: 18.3833 },
+            "Abéché": { lat: 13.85, lon: 20.8333 },
+            "Mongo": { lat: 12.1833, lon: 18.7 }
+        };
+
+        // Éléments DOM
+        const citySelect = document.getElementById('city-select');
+        const loadingEl = document.getElementById('loading');
+        const errorEl = document.getElementById('error');
+        const errorMessage = document.getElementById('error-message');
+        const currentWeatherEl = document.getElementById('current-weather');
+        const forecastEl = document.getElementById('forecast');
+        
+        // Éléments pour les données actuelles
+        const currentCityEl = document.getElementById('current-city');
+        const currentTempEl = document.getElementById('current-temp');
+        const currentDescEl = document.getElementById('current-desc');
+        const currentIconEl = document.getElementById('current-icon');
+        const feelsLikeEl = document.getElementById('feels-like');
+        const humidityEl = document.getElementById('humidity');
+        const windEl = document.getElementById('wind');
+        const pressureEl = document.getElementById('pressure');
+        
+        // Conteneur pour les prévisions
+        const forecastCardsEl = document.getElementById('forecast-cards');
+
+        // Événement de changement de ville
+        citySelect.addEventListener('change', function() {
+            const selectedCity = this.value;
+            if (selectedCity) {
+                loadWeatherData(selectedCity);
+            } else {
+                hideWeatherSections();
+            }
+        });
+
+        // Fonction pour charger les données météo (temps réel via OpenWeather One Call avec repli Open-Meteo)
+        async function loadWeatherData(cityName) {
+            // Afficher le chargement et masquer les autres sections
+            showLoading();
+            hideWeatherSections();
+            hideError();
+
+            try {
+                const cityCoords = CITIES[cityName];
+
+                // Récupérer depuis One Call (v2.5 puis v3.0 en repli). Si échec, tenter Open-Meteo (sans clé)
+                let data;
+                try {
+                    data = await fetchOneCallData(cityCoords.lat, cityCoords.lon, API_KEY);
+                } catch (e1) {
+                    console.warn('OpenWeather One Call indisponible, tentative Open-Meteo...', e1);
+                    data = await fetchOpenMeteoNormalized(cityCoords.lat, cityCoords.lon);
+                }
+
+                // Adapter les données pour nos fonctions d'affichage existantes
+                const current = {
+                    temp: data.current?.temp,
+                    feels_like: data.current?.feels_like,
+                    humidity: data.current?.humidity,
+                    pressure: data.current?.pressure,
+                    // Conversion m/s -> km/h
+                    wind_speed: Math.round((data.current?.wind_speed || 0) * 3.6),
+                    weather: [
+                        {
+                            description: data.current?.weather?.[0]?.description || '',
+                            icon: data.current?.weather?.[0]?.icon || '01d'
+                        }
+                    ]
+                };
+
+                const forecast = (data.daily || []).slice(0, 7).map(d => ({
+                    dt: d.dt,
+                    temp: { min: d.temp?.min, max: d.temp?.max },
+                    weather: [
+                        {
+                            description: d.weather?.[0]?.description || '',
+                            icon: d.weather?.[0]?.icon || '01d'
+                        }
+                    ]
+                }));
+
+                // Afficher les données
+                displayCurrentWeather(current, cityName);
+                displayForecast(forecast);
+
+                // Masquer le chargement et afficher les sections météo
+                hideLoading();
+                showWeatherSections();
+            } catch (error) {
+                console.error('Erreur lors du chargement des données:', error);
+                showError(`Impossible de charger les données météo. Détails: ${error.message}`);
+                hideLoading();
+            }
+        }
+
+        // Tente One Call v2.5 puis v3.0 si nécessaire, avec message d'erreur détaillé
+        async function fetchOneCallData(lat, lon, apiKey) {
+            const params = `lat=${lat}&lon=${lon}&units=metric&lang=fr&exclude=minutely,hourly,alerts&appid=${apiKey}`;
+
+            // Essai v2.5
+            const url25 = `https://api.openweathermap.org/data/2.5/onecall?${params}`;
+            let res = await fetch(url25);
+            if (res.ok) {
+                return res.json();
+            } else {
+                let bodyText = '';
+                try { bodyText = await res.text(); } catch {}
+                // Si 401/404/400, on tente v3.0
+                const url30 = `https://api.openweathermap.org/data/3.0/onecall?${params}`;
+                res = await fetch(url30);
+                if (res.ok) {
+                    return res.json();
+                } else {
+                    let bodyText2 = '';
+                    try { bodyText2 = await res.text(); } catch {}
+                    throw new Error(`API v2.5 -> ${res.status} ${bodyText}; puis v3.0 -> ${res.status} ${bodyText2}`);
+                }
+            }
+        }
+
+        // Repli: Open-Meteo (sans clé) + normalisation des données au format attendu par le rendu
+        async function fetchOpenMeteoNormalized(lat, lon) {
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,pressure_msl,wind_speed_10m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto&forecast_days=7&wind_speed_unit=kmh`;
+            const res = await fetch(url);
+            if (!res.ok) {
+                let body = '';
+                try { body = await res.text(); } catch {}
+                throw new Error(`Open-Meteo ${res.status} ${body}`);
+            }
+            const m = await res.json();
+
+            const cc = m.current || {};
+            const mappedCurrent = mapWmoToDescAndIcon(cc.weather_code, cc.is_day === 1);
+            const current = {
+                temp: cc.temperature_2m,
+                feels_like: cc.apparent_temperature,
+                humidity: cc.relative_humidity_2m,
+                pressure: Math.round(cc.pressure_msl),
+                // Normaliser en m/s afin que la conversion * 3.6 dans loadWeatherData donne des km/h
+                wind_speed: (cc.wind_speed_10m || 0) / 3.6,
+                weather: [ { description: mappedCurrent.description, icon: mappedCurrent.icon } ]
+            };
+
+            const daily = [];
+            const days = (m.daily && m.daily.time) ? m.daily.time.length : 0;
+            for (let i = 0; i < days; i++) {
+                const code = m.daily.weather_code[i];
+                const mapped = mapWmoToDescAndIcon(code, true);
+                daily.push({
+                    dt: Math.floor(new Date(m.daily.time[i]).getTime() / 1000),
+                    temp: { min: m.daily.temperature_2m_min[i], max: m.daily.temperature_2m_max[i] },
+                    weather: [ { description: mapped.description, icon: mapped.icon } ]
+                });
+            }
+
+            return { current, daily };
+        }
+
+        // Mapping des codes WMO -> description FR + icône type OpenWeather (approximation)
+        function mapWmoToDescAndIcon(code, isDay) {
+            const map = [
+                { codes: [0], desc: 'Ciel dégagé', icon: isDay ? '01d' : '01n' },
+                { codes: [1], desc: 'Plutôt dégagé', icon: isDay ? '02d' : '02n' },
+                { codes: [2], desc: 'Partiellement nuageux', icon: isDay ? '03d' : '03n' },
+                { codes: [3], desc: 'Couvert', icon: isDay ? '04d' : '04n' },
+                { codes: [45, 48], desc: 'Brouillard', icon: isDay ? '50d' : '50n' },
+                { codes: [51, 53, 55], desc: 'Bruine', icon: isDay ? '10d' : '10n' },
+                { codes: [56, 57], desc: 'Bruine verglaçante', icon: isDay ? '13d' : '13n' },
+                { codes: [61, 63, 65], desc: 'Pluie', icon: isDay ? '10d' : '10n' },
+                { codes: [66, 67], desc: 'Pluie verglaçante', icon: isDay ? '13d' : '13n' },
+                { codes: [71, 73, 75], desc: 'Neige', icon: isDay ? '13d' : '13n' },
+                { codes: [77], desc: 'Grains de neige', icon: isDay ? '13d' : '13n' },
+                { codes: [80, 81, 82], desc: 'Averses de pluie', icon: isDay ? '09d' : '09n' },
+                { codes: [85, 86], desc: 'Averses de neige', icon: isDay ? '13d' : '13n' },
+                { codes: [95], desc: 'Orages', icon: isDay ? '11d' : '11n' },
+                { codes: [96, 99], desc: 'Orages avec grêle', icon: isDay ? '11d' : '11n' }
+            ];
+            for (const entry of map) {
+                if (entry.codes.includes(Number(code))) return { description: entry.desc, icon: entry.icon };
+            }
+            return { description: 'Conditions normales', icon: isDay ? '02d' : '02n' };
+        }
+
+        // Fonction pour afficher la météo actuelle
+        function displayCurrentWeather(data, cityName) {
+            currentCityEl.textContent = `🌍 ${cityName}`;
+            currentTempEl.textContent = `${Math.round(data.temp)}°C`;
+            currentDescEl.textContent = data.weather[0].description;
+            currentIconEl.innerHTML = getWeatherIconElement(data.weather[0].icon);
+            
+            feelsLikeEl.textContent = `${Math.round(data.feels_like)}°C`;
+            humidityEl.textContent = `${data.humidity}%`;
+            windEl.textContent = `${data.wind_speed} km/h`;
+            pressureEl.textContent = `${data.pressure} hPa`;
+        }
+
+        // Fonction pour afficher les prévisions
+        function displayForecast(forecastData) {
+            forecastCardsEl.innerHTML = '';
+            
+            forecastData.forEach(day => {
+                const date = new Date(day.dt * 1000);
+                const dayName = date.toLocaleDateString('fr-FR', { weekday: 'short' });
+                const dayNumber = date.getDate();
+                const month = date.toLocaleDateString('fr-FR', { month: 'short' });
+                
+                const card = document.createElement('div');
+                card.className = 'forecast-card';
+                card.innerHTML = `
+                    <div class="forecast-date">${dayName} ${dayNumber} ${month}</div>
+                    <div class="forecast-icon">${getWeatherIconElement(day.weather[0].icon)}</div>
+                    <div class="forecast-desc">${day.weather[0].description}</div>
+                    <div class="forecast-temp">
+                        <span class="temp-max">${Math.round(day.temp.max)}°</span>
+                        <span class="temp-min">${Math.round(day.temp.min)}°</span>
+                    </div>
+                `;
+                
+                forecastCardsEl.appendChild(card);
+            });
+        }
+
+        // Fonction utilitaire pour obtenir l'élément icône météo (icônes officielles OpenWeather)
+        function getWeatherIconElement(icon) {
+            // icon est un code type "01d", "02n", etc.
+            const src = `https://openweathermap.org/img/wn/${icon}@2x.png`;
+            return `<img class="forecast-icon" src="${src}" alt="Icône météo" width="50" height="50" />`;
+        }
+
+        // Fonctions pour gérer l'affichage des sections
+        function showLoading() {
+            loadingEl.style.display = 'block';
+        }
+
+        function hideLoading() {
+            loadingEl.style.display = 'none';
+        }
+
+        function showWeatherSections() {
+            currentWeatherEl.style.display = 'block';
+            forecastEl.style.display = 'block';
+        }
+
+        function hideWeatherSections() {
+            currentWeatherEl.style.display = 'none';
+            forecastEl.style.display = 'none';
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorEl.style.display = 'block';
+        }
+
+        function hideError() {
+            errorEl.style.display = 'none';
+        }
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Afficher un message d'accueil
+            console.log('Application Météo Tchad initialisée');
+            // Charger une ville par défaut si aucune n'est sélectionnée
+            if (!citySelect.value) {
+                citySelect.value = "N'Djamena";
+                loadWeatherData("N'Djamena");
+            }
+        });
+    </script>
+</body>
+</html>
