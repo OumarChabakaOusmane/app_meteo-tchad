@@ -19,6 +19,4 @@ app_meteo tchad/
 └─ README.md
 ```
 
-## Remarques
-- Projet scolaire/simple.
-- Éviter de publier une clé API en clair sur un dépôt public.
+
